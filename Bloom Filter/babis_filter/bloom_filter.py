@@ -1,3 +1,10 @@
+'''
+Implementation of a Bloom filter for given 
+false positive probability, based on geeksforgeeks
+implementation
+'''
+
+
 import math
 from bitarray import bitarray
 import mmh3
