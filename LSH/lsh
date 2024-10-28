@@ -1,0 +1,148 @@
+from random import shuffle
+from collections import defaultdict
+
+
+# Συνάρτηση για την εξαγωγή shingles
+def shingle(text: str, k: int):
+    shingle_set = []
+    for i in range(len(text) - k + 1):
+        shingle_set.append(text[i:i + k])
+    return set(shingle_set)
+
+
+# Συνάρτηση για τη δημιουργία sparse vector (one-hot vector)
+def sh_vector(shingle_set, vocab):
+    sparse_vector = [1 if shingle in shingle_set else 0 for shingle in vocab]
+    return sparse_vector
+
+
+# Συνάρτηση για τη δημιουργία hash function
+def create_hash_func(size: int):
+    hash_ex = list(range(1, size + 1))
+    shuffle(hash_ex)
+    return hash_ex
+
+
+# Συνάρτηση για τη δημιουργία πολλαπλών minhash συναρτήσεων
+def build_minhash_func(vocab_size: int, nbits: int):
+    hashes = []
+    for _ in range(nbits):
+        hashes.append(create_hash_func(vocab_size))
+    return hashes
+
+
+# Συνάρτηση για τη δημιουργία signature vector
+def create_hash(vector, minhash_func):
+    signature = []
+    for func in minhash_func:
+        for i in range(1, len(vector) + 1):
+            idx = func.index(i)
+            signature_val = vector[idx]
+            if signature_val == 1:
+                signature.append(idx)
+                break
+    return signature
+
+
+def jaccard(a: set, b: set):
+    return len(a.intersection(b)) / len(a.union(b))
+
+
+def split_vector(signature, b):
+    assert len(signature) % b == 0
+    r = int(len(signature) / b)
+    # code splitting signature in b parts
+    subvecs = []
+    for i in range(0, len(signature), r):
+        subvecs.append(signature[i: i + r])
+    return subvecs
+
+########## MAIN ##########
+
+a = "flying fish flew by the space station"
+b = "we will not allow you to bring your pet armadillo along"
+c = "he figured a few sticks of dynamite were easier than a fishing pole to catch fish"
+
+k = 2
+
+# Δημιουργία shingles για κάθε κείμενο
+sh_a = shingle(a, k)
+sh_b = shingle(b, k)
+sh_c = shingle(c, k)
+
+# Δημιουργία καθολικού συνόλου
+vocab = list(sh_a.union(sh_b).union(sh_c))
+print("Universal set of shingles:", vocab)
+
+# Δημιουργία sparse vectors (one-hot vectors) για κάθε shingle set
+sparse_a = sh_vector(sh_a, vocab)
+sparse_b = sh_vector(sh_b, vocab)
+sparse_c = sh_vector(sh_c, vocab)
+
+print("Sparse vector for sh_a:", sparse_a)
+print("Sparse vector for sh_b:", sparse_b)
+print("Sparse vector for sh_c:", sparse_c)
+
+# Δημιουργία minhash συναρτήσεων
+minhash_func = build_minhash_func(len(vocab), 30)
+
+# Δημιουργία MinHash signatures για κάθε sparse vector
+a_sig = create_hash(sparse_a, minhash_func)
+b_sig = create_hash(sparse_b, minhash_func)
+c_sig = create_hash(sparse_c, minhash_func)
+
+print("Signature for sh_a:", a_sig)
+print("Signature for sh_b:", b_sig)
+print("Signature for sh_c:", c_sig)
+
+# Υπολογισμός Jaccard similarity
+jaccard_sh_a_b = jaccard(sh_a, sh_b)
+jaccard_sh_a_c = jaccard(sh_a, sh_c)
+jaccard_sh_b_c = jaccard(sh_b, sh_c)
+
+jaccard_sig_a_b = jaccard(set(a_sig), set(b_sig))
+jaccard_sig_a_c = jaccard(set(a_sig), set(c_sig))
+jaccard_sig_b_c = jaccard(set(b_sig), set(c_sig))
+
+# Εκτύπωση αποτελεσμάτων
+print("\nJaccard similarity between original shingles:")
+print("Jaccard(sh_a, sh_b):", jaccard_sh_a_b)
+print("Jaccard(sh_a, sh_c):", jaccard_sh_a_c)
+print("Jaccard(sh_b, sh_c):", jaccard_sh_b_c)
+
+print("\nJaccard similarity between MinHash signatures:")
+print("Jaccard(a_sig, b_sig):", jaccard_sig_a_b)
+print("Jaccard(a_sig, c_sig):", jaccard_sig_a_c)
+print("Jaccard(b_sig, c_sig):", jaccard_sig_b_c)
+
+band_a = split_vector(a_sig, 10)
+band_b = split_vector(b_sig, 10)
+band_c = split_vector(c_sig, 10)
+
+print("Band a: ", band_a)
+print("Band b:", band_b)
+print("Band c:", band_c)
+
+'''
+for b_rows, c_rows in zip(band_b, band_c):
+    if b_rows == c_rows:
+        print(f"\nCandidate pair in b and c: {b_rows} == {c_rows}")
+        # we only need one band to match
+        break
+
+
+for a_rows, b_rows in zip(band_a, band_b):
+    if a_rows == b_rows:
+        print(f"\nCandidate pair in a and b: {a_rows} == {b_rows}")
+        # we only need one band to match
+        break
+
+
+for a_rows, c_rows in zip(band_a, band_c):
+    if a_rows == c_rows:
+        print(f"\nCandidate pair in a and c: {b_rows} == {c_rows}")
+        # we only need one band to match
+        break
+'''
+
+# REFERENCE : https://www.pinecone.io/learn/series/faiss/locality-sensitive-hashing/
