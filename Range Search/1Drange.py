@@ -5,8 +5,8 @@
 
 
 Υλοποίηση 1D Range Search - Η αργή μέθοδος:
-            Βήμα 1: postorder traversal 
-            Βήμα 2: Δημιουργία μίας linked list των φύλλων και αναζήτηση στο επιθυμητό range
+            Βήμα 1: postorder traversal για δημιουργία linked list των φύλλων
+            Βήμα 2: Αναζήτηση στη λίστα στο επιθυμητό range
 
 Total complexity: postorder + list access = O(n) + O(k) = O(n)     --> ΑΥΤΗ ΥΛΟΠΟΙΕΙΤΑΙ ΠΑΡΑΚΑΤΩ !!!
 
