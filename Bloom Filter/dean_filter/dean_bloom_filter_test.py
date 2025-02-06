@@ -18,7 +18,7 @@ existent_strings = [
 non_existent_strings = [
     "theo", 
     "dean", 
-    "babis (pookie)"
+    "babis"
 ]
 
 set_size = len(existent_strings)
